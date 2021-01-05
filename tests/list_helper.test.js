@@ -188,3 +188,37 @@ describe('favorite blog', () => {
         expect(result).toEqual(answer)
     })
 })
+
+describe('most blogs', () => {
+    test('when list has only one blog', () => {
+        const result = listHelper.mostBlogs(listWithOneBlog)
+        const answer = {
+            author: 'Edsger W. Dijkstra',
+            blogs: 1
+        }
+        expect(result).toEqual(answer)
+    })
+
+    test('when list has several pre made blogs', () => {
+        const result = listHelper.mostBlogs(preMadeBlogsList)
+        const answer = {
+            author: "Robert C. Martin",
+            blogs: 3
+        }
+        expect(result).toEqual(answer)
+    })
+
+    test('db list with multiple blogs', () => {
+        const result = listHelper.mostBlogs(listWithMultipleBlogs)
+        const answer = {
+            author: "Author A",
+            blogs: 1,
+        }
+        expect(result).toEqual(answer)
+    })
+
+    test('empty list', () => {
+        const result = listHelper.mostBlogs(emptyBlogList)
+        expect(result).toBe(null)
+    })
+})
