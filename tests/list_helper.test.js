@@ -222,3 +222,37 @@ describe('most blogs', () => {
         expect(result).toBe(null)
     })
 })
+
+describe('most likes', () => {
+    test('when list has only one blog', () => {
+        const result = listHelper.mostLikes(listWithOneBlog)
+        const answer = {
+            author: 'Edsger W. Dijkstra',
+            likes: 5
+        }
+        expect(result).toEqual(answer)
+    })
+
+    test('when list has several pre made blogs', () => {
+        const result = listHelper.mostLikes(preMadeBlogsList)
+        const answer = {
+            author: 'Edsger W. Dijkstra',
+            likes: 17
+        }
+        expect(result).toEqual(answer)
+    })
+
+    test('db list with multiple blogs', () => {
+        const result = listHelper.mostLikes(listWithMultipleBlogs)
+        const answer = {
+            author: "Author C",
+            likes: 30,
+        }
+        expect(result).toEqual(answer)
+    })
+
+    test('empty list', () => {
+        const result = listHelper.mostLikes(emptyBlogList)
+        expect(result).toBe(null)
+    })
+})
