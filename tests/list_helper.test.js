@@ -224,6 +224,30 @@ describe('most blogs', () => {
 })
 
 describe('most likes', () => {
+    const moreThanOneFavorite = [
+        {
+            title: "Blog A",
+            author: "Author A",
+            url: "www.blogA.com",
+            likes: 10,
+            id: "5ff48184b7744a442801a14f"
+        },
+        {
+            title: "Blog B",
+            author: "Author B",
+            url: "www.blogB.com",
+            likes: 20,
+            id: "5ff48194b7744a442801a150"
+        },
+        {
+            title: "Blog C",
+            author: "Author C",
+            url: "www.blogC.com",
+            likes: 20,
+            id: "5ff481a0b7744a442801a151"
+        }
+    ]
+
     test('when list has only one blog', () => {
         const result = listHelper.mostLikes(listWithOneBlog)
         const answer = {
@@ -254,5 +278,14 @@ describe('most likes', () => {
     test('empty list', () => {
         const result = listHelper.mostLikes(emptyBlogList)
         expect(result).toBe(null)
+    })
+
+    test('more than one favorite', () => {
+        const result = listHelper.mostLikes(moreThanOneFavorite)
+        const answer = {
+            author: "Author B",
+            likes: 20,
+        }
+        expect(result).toEqual(answer)
     })
 })
