@@ -75,6 +75,22 @@ describe('POST requests to /api/blogs', () => {
         const i = _.findIndex(response.body, (blog) => blog.title === newBlog.title)
         expect(response.body[i].likes).toBe(0)
     })
+
+    test('Add a new blog without title and url', async () => {
+        const newBlog = {
+            author: 'Tester NoTtileUrl',
+            likes: 10
+        }
+
+        await api
+            .post('/api/blogs')
+            .send(newBlog)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+
+        const response = await api.get('/api/blogs')
+        expect(response.body).toHaveLength(helper.initialBlogs.length)
+    })
 })
 
 afterAll(() => {
