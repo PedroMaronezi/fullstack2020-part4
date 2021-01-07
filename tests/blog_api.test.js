@@ -3,6 +3,7 @@ const supertest = require('supertest')
 const helper = require('./test_helper')
 const app = require('../app')
 const api = supertest(app)
+const _ = require('lodash')
 
 const Blog = require('../models/blog')
 
@@ -55,6 +56,24 @@ describe('POST requests to /api/blogs', () => {
         const titles = response.body.map(r => r.title)
         expect(response.body).toHaveLength(helper.initialBlogs.length + 1)
         expect(titles).toContain('adding a new blog to the database')
+    })
+
+    test('Adding a new blog with the likes property missing', async () => {
+        const newBlog = {
+            title: 'blog without likes',
+            author: 'Tester',
+            url: 'www.testnolikes.com'
+        }
+
+        await api
+            .post('/api/blogs')
+            .send(newBlog)
+            .expect(201)
+            .expect('Content-Type', /application\/json/)
+
+        const response = await api.get('/api/blogs')
+        const i = _.findIndex(response.body, (blog) => blog.title === newBlog.title)
+        expect(response.body[i].likes).toBe(0)
     })
 })
 
