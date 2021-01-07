@@ -36,6 +36,28 @@ describe('GET requests to /api/blogs', () => {
     })
 })
 
+describe('POST requests to /api/blogs', () => {
+    test('Adding a new blog', async () => {
+        const newBlog = {
+            title: 'adding a new blog to the database',
+            author: 'Tester',
+            url: 'www.test.com',
+            like: 0
+        }
+
+        await api
+            .post('/api/blogs')
+            .send(newBlog)
+            .expect(201)
+            .expect('Content-Type', /application\/json/)
+
+        const response = await api.get('/api/blogs')
+        const titles = response.body.map(r => r.title)
+        expect(response.body).toHaveLength(helper.initialBlogs.length + 1)
+        expect(titles).toContain('adding a new blog to the database')
+    })
+})
+
 afterAll(() => {
   mongoose.connection.close()
 })
