@@ -26,6 +26,14 @@ describe('GET requests to /api/blogs', () => {
         const response = await api.get('/api/blogs')
         expect(response.body).toHaveLength(helper.initialBlogs.length)
     })
+
+    test('Verify the existence of the property id', async () => {
+        const response = await api.get('/api/blogs')
+        const blogs = response.body
+        blogs.forEach(blog => {
+            expect(blog.id).toBeDefined()
+        })
+    })
 })
 
 afterAll(() => {
