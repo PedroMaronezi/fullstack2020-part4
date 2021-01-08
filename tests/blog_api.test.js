@@ -4,11 +4,19 @@ const helper = require('./test_helper')
 const app = require('../app')
 const api = supertest(app)
 const _ = require('lodash')
+const bcrypt = require('bcrypt')
 
 const Blog = require('../models/blog')
+const User = require('../models/user')
 
 beforeEach(async () => {
     await Blog.deleteMany({})
+    await User.deleteMany({})
+
+    const passwordHash = await bcrypt.hash('sekret', 10)
+    const user = new User({ username: 'root', passwordHash })
+
+    await user.save()
 
     const blogObjects = helper.initialBlogs.map(blog => new Blog(blog))
     const promiseArray = blogObjects.map(blog => blog.save())
@@ -23,7 +31,7 @@ describe('GET requests to /api/blogs', () => {
           .expect('Content-Type', /application\/json/)
       })
 
-      test(`There are ${helper.initialBlogs.length} blogs`, async () => {
+    test(`There are ${helper.initialBlogs.length} blogs`, async () => {
         const response = await api.get('/api/blogs')
         expect(response.body).toHaveLength(helper.initialBlogs.length)
     })
@@ -39,6 +47,14 @@ describe('GET requests to /api/blogs', () => {
 
 describe('POST requests to /api/blogs', () => {
     test('Adding a new blog', async () => {
+        const userCredential = {
+            username: "root",
+            password: "sekret"
+        }
+
+        const userLogin = await api.post('/api/login').send(userCredential)
+        console.log(userLogin.token)
+
         const newBlog = {
             title: 'adding a new blog to the database',
             author: 'Tester',
@@ -49,6 +65,7 @@ describe('POST requests to /api/blogs', () => {
         await api
             .post('/api/blogs')
             .send(newBlog)
+            .set('Authorization', `Bearer ${userLogin.token}`)
             .expect(201)
             .expect('Content-Type', /application\/json/)
 
@@ -56,9 +73,19 @@ describe('POST requests to /api/blogs', () => {
         const titles = response.body.map(r => r.title)
         expect(response.body).toHaveLength(helper.initialBlogs.length + 1)
         expect(titles).toContain('adding a new blog to the database')
+
+        const i = _.findIndex(response.body, (blog) => blog.title === newBlog.title)
+        expect(response.body[i].user.username).toBe(userCredential.username)
     })
 
     test('Adding a new blog with the likes property missing', async () => {
+        const userCredential = {
+            username: "root",
+            password: "sekret"
+        }
+
+        const userLogin = await api.post('/api/login').send(userCredential)
+
         const newBlog = {
             title: 'blog without likes',
             author: 'Tester',
@@ -68,15 +95,24 @@ describe('POST requests to /api/blogs', () => {
         await api
             .post('/api/blogs')
             .send(newBlog)
+            .set('Authorization', `Bearer ${userLogin.token}`)
             .expect(201)
             .expect('Content-Type', /application\/json/)
 
         const response = await api.get('/api/blogs')
         const i = _.findIndex(response.body, (blog) => blog.title === newBlog.title)
         expect(response.body[i].likes).toBe(0)
+        expect(response.body[i].user.username).toBe(userCredential.username)
     })
 
     test('Add a new blog without title and url', async () => {
+        const userCredential = {
+            username: "root",
+            password: "sekret"
+        }
+
+        const userLogin = await api.post('/api/login').send(userCredential)
+
         const newBlog = {
             author: 'Tester NoTtileUrl',
             likes: 10
@@ -85,12 +121,36 @@ describe('POST requests to /api/blogs', () => {
         await api
             .post('/api/blogs')
             .send(newBlog)
+            .set('Authorization', `Bearer ${userLogin.token}`)
             .expect(400)
             .expect('Content-Type', /application\/json/)
 
         const response = await api.get('/api/blogs')
         expect(response.body).toHaveLength(helper.initialBlogs.length)
     })
+
+    test('If a token is not provided, the blog is not added', async () => {
+        const userCredential = {
+            username: "root",
+            password: "sekret"
+        }
+        const userLogin = await api.post('/api/login').send(userCredential)
+
+        const newBlog = {
+            title: 'New blog',
+            author: 'New author',
+            url: 'www.newblog.com',
+            likes: 18
+        }
+
+        await api
+            .post('/api/blogs')
+            .send(newBlog)
+            .expect(401)
+
+        const response = await api.get('/api/blogs')
+        expect(response.body).toHaveLength(helper.initialBlogs.length)
+    })    
 })
 
 describe('DELETE requests', () => {
