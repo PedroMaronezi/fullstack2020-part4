@@ -53,7 +53,7 @@ describe('POST requests to /api/blogs', () => {
         }
 
         const userLogin = await api.post('/api/login').send(userCredential)
-        console.log(userLogin.token)
+        const userInfo = JSON.parse(userLogin.text)
 
         const newBlog = {
             title: 'adding a new blog to the database',
@@ -65,7 +65,7 @@ describe('POST requests to /api/blogs', () => {
         await api
             .post('/api/blogs')
             .send(newBlog)
-            .set('Authorization', `Bearer ${userLogin.token}`)
+            .set('Authorization', `Bearer ${userInfo.token}`)
             .expect(201)
             .expect('Content-Type', /application\/json/)
 
@@ -85,6 +85,7 @@ describe('POST requests to /api/blogs', () => {
         }
 
         const userLogin = await api.post('/api/login').send(userCredential)
+        const userInfo = JSON.parse(userLogin.text)
 
         const newBlog = {
             title: 'blog without likes',
@@ -95,7 +96,7 @@ describe('POST requests to /api/blogs', () => {
         await api
             .post('/api/blogs')
             .send(newBlog)
-            .set('Authorization', `Bearer ${userLogin.token}`)
+            .set('Authorization', `Bearer ${userInfo.token}`)
             .expect(201)
             .expect('Content-Type', /application\/json/)
 
@@ -112,6 +113,7 @@ describe('POST requests to /api/blogs', () => {
         }
 
         const userLogin = await api.post('/api/login').send(userCredential)
+        const userInfo = JSON.parse(userLogin.text)
 
         const newBlog = {
             author: 'Tester NoTtileUrl',
@@ -121,7 +123,7 @@ describe('POST requests to /api/blogs', () => {
         await api
             .post('/api/blogs')
             .send(newBlog)
-            .set('Authorization', `Bearer ${userLogin.token}`)
+            .set('Authorization', `Bearer ${userInfo.token}`)
             .expect(400)
             .expect('Content-Type', /application\/json/)
 
@@ -135,6 +137,7 @@ describe('POST requests to /api/blogs', () => {
             password: "sekret"
         }
         const userLogin = await api.post('/api/login').send(userCredential)
+        const userInfo = JSON.parse(userLogin.text)
 
         const newBlog = {
             title: 'New blog',
@@ -155,15 +158,43 @@ describe('POST requests to /api/blogs', () => {
 
 describe('DELETE requests', () => {
     test('Delete an existing blog', async () => {
-        let response = await helper.blogsInDb()
-        const blogToDelete = response[0]
+        //let response = await api.get('/api/blogs')
+        //const blogToDelete = response.body[0]
+
+        const userCredential = {
+            username: "root",
+            password: "sekret"
+        }
+
+        const userLogin = await api.post('/api/login').send(userCredential)
+        const userInfo = JSON.parse(userLogin.text)
+
+        let blogToDelete = {
+            title: 'blog to be deleted',
+            author: 'Deleter',
+            url: 'www.delete.com',
+            like: 0
+        }
+
+        await api
+            .post('/api/blogs/')
+            .send(blogToDelete)
+            .set('Authorization', `Bearer ${userInfo.token}`)
+            .expect(201)
+            .expect('Content-Type', /application\/json/)
+
+        let response = await api.get('/api/blogs')
+        expect(response.body).toHaveLength(helper.initialBlogs.length + 1)
+        const i = _.findIndex(response.body, (blog) => blog.title === blogToDelete.title)
+        blogToDelete = response.body[i]
 
         await api 
             .delete(`/api/blogs/${blogToDelete.id}`)
+            .set('Authorization', `Bearer ${userInfo.token}`)
             .expect(204)
 
         response = await helper.blogsInDb()
-        expect(response).toHaveLength(helper.initialBlogs.length - 1)
+        expect(response).toHaveLength(helper.initialBlogs.length)
 
         const titles = response.map(blog => blog.title)
         expect(titles).not.toContain(blogToDelete.title)
